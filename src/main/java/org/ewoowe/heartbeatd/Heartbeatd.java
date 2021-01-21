@@ -184,7 +184,7 @@ public class Heartbeatd implements HeartbeatdService
 	@Override
 	public void haveHeartbeatOnce(HeartbeatTask task)
 	{
-		pauseHeartbeatTask(task);
+		resetHeartbeatTask(task);
 		HeartbeatTaskMonitor monitor = heartbeatHolder.get(task);
 		if (monitor.getLosted().get())
 		{
@@ -202,7 +202,7 @@ public class Heartbeatd implements HeartbeatdService
 	 * 每收到一次心跳正常的监测，需要将已有的心跳丢失监测任务重置
 	 * @param task 心跳监测任务
 	 */
-	private void pauseHeartbeatTask(HeartbeatTask task)
+	private void resetHeartbeatTask(HeartbeatTask task)
 	{
 		HeartbeatTaskMonitor taskMonitor = heartbeatHolder.get(task);
 
