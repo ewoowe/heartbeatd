@@ -127,7 +127,7 @@ public class Heartbeatd implements HeartbeatdService
 				}
 				case UNREGISTER:
 				{
-					HeartbeatTaskMonitor taskMonitor = createMonitor(task.getTask());
+					HeartbeatTaskMonitor taskMonitor = heartbeatHolder.get(task.getTask());
 					taskMonitor.getCancel().compareAndSet(false, true);
 					TriggerKey triggerKey = TriggerKey.triggerKey("heartbeat task monitor trigger " + task.getTask().getId());
 					try
