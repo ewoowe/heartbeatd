@@ -21,7 +21,7 @@ public class HeartbeatTaskMonitor
      * 当心跳丢失次数连续达到{@link HeartbeatTaskMonitor#getThreshold}次后
      * 即{@code remains <= 0}时，losted被置为true
      * 并且当心跳恢复监测次数达到{@link HeartbeatTaskMonitor#getThreshold()}次后
-     * 即{@code remains == threhold}时，loted被置位false
+     * 即{@code remains == threhold}时，losted被置位false
      */
     private AtomicBoolean losted = new AtomicBoolean(false);
 
