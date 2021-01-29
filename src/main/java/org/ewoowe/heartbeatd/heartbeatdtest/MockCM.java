@@ -24,7 +24,7 @@ public class MockCM
         task.setHeartbeatLostHandler(heartbeatHandler);
         task.setHeartbeatRecoverHandler(heartbeatHandler);
         task.setTimes(3);
-        task.setPeriod(5);
+        task.setPeriod(11);
         heartbeatd.registerHeartbeatTask(task);
     }
 
