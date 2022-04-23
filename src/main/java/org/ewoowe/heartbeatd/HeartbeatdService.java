@@ -4,10 +4,9 @@ package org.ewoowe.heartbeatd;
  * 心跳监测框架对外API
  *
  * @author wangcheng2017@ict.ac.cn
- * @date 2021.01.20
+ * @since 2021.01.20
  */
-public interface HeartbeatdService
-{
+public interface HeartbeatdService {
 	/**
 	 * 注册心跳监测任务
 	 *

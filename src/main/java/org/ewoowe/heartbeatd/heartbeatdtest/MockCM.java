@@ -8,8 +8,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 
 @Service
-public class MockCM
-{
+public class MockCM {
     HeartbeatHandler heartbeatHandler = new HeartbeatHandler();
 
     HeartbeatTask task;
@@ -18,8 +17,7 @@ public class MockCM
     private HeartbeatdService heartbeatd;
 
     @PostConstruct
-    public void init() throws InterruptedException
-    {
+    public void init() throws InterruptedException {
         task = new HeartbeatTask();
         task.setHeartbeatLostHandler(heartbeatHandler);
         task.setHeartbeatRecoverHandler(heartbeatHandler);
@@ -28,13 +26,11 @@ public class MockCM
         heartbeatd.registerHeartbeatTask(task);
     }
 
-    public HeartbeatHandler getHeartbeatHandler()
-    {
+    public HeartbeatHandler getHeartbeatHandler() {
         return heartbeatHandler;
     }
 
-    public HeartbeatTask getTask()
-    {
+    public HeartbeatTask getTask() {
         return task;
     }
 }

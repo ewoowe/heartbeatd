@@ -7,10 +7,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 用于监视一个HeartbeatTask
  *
  * @author wangcheng2017@ict.ac.cn
- * @date 2021.01.21
+ * @since 2021.01.21
  */
-public class HeartbeatTaskMonitor
-{
+public class HeartbeatTaskMonitor {
     /**
      * 要监测的心跳任务
      */
@@ -44,61 +43,50 @@ public class HeartbeatTaskMonitor
      */
     private AtomicBoolean cancel = new AtomicBoolean(false);
 
-    public HeartbeatTask getTask()
-    {
+    public HeartbeatTask getTask() {
         return task;
     }
 
-    public void setTask(HeartbeatTask task)
-    {
+    public void setTask(HeartbeatTask task) {
         this.task = task;
     }
 
-    public AtomicBoolean getLosted()
-    {
+    public AtomicBoolean getLosted() {
         return losted;
     }
 
-    public void setLosted(AtomicBoolean losted)
-    {
+    public void setLosted(AtomicBoolean losted) {
         this.losted = losted;
     }
 
-    public AtomicInteger getThreshold()
-    {
+    public AtomicInteger getThreshold() {
         return threshold;
     }
 
-    public void setThreshold(AtomicInteger threshold)
-    {
+    public void setThreshold(AtomicInteger threshold) {
         this.threshold = threshold;
     }
 
-    public AtomicInteger getRemains()
-    {
+    public AtomicInteger getRemains() {
         return remains;
     }
 
-    public void setRemains(AtomicInteger remains)
-    {
+    public void setRemains(AtomicInteger remains) {
         this.remains = remains;
     }
 
-    public AtomicBoolean getCancel()
-    {
+    public AtomicBoolean getCancel() {
         return cancel;
     }
 
-    public void setCancel(AtomicBoolean cancel)
-    {
+    public void setCancel(AtomicBoolean cancel) {
         this.cancel = cancel;
     }
 
     /**
      * 增加一次剩余丢失次数，说明收到心跳监测了，但是增加的上限为threshold
      */
-    public int incrementRemainsAndGet()
-    {
+    public int incrementRemainsAndGet() {
         int old = remains.get();
         int upd = old + 1;
         if (old < threshold.get())
@@ -109,8 +97,7 @@ public class HeartbeatTaskMonitor
     /**
      * 减少一次剩余丢失次数，说明丢失心跳监测了，但是减少的下限为0
      */
-    public int decrementRemainsAndGet()
-    {
+    public int decrementRemainsAndGet() {
         int old = remains.get();
         int upd = old - 1;
         if (upd >= 0)

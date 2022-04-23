@@ -16,20 +16,19 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 心跳监测任务管理器
  *
  * @author wangcheng2017@ict.ac.cn
- * @date 2021.01.20
+ * @since 2021.01.20
  */
 @Service
-public class Heartbeatd implements HeartbeatdService
-{
+public class Heartbeatd implements HeartbeatdService {
 	/**
 	 * 心跳监测任务存储
 	 */
-	private Map<HeartbeatTask, HeartbeatTaskMonitor> heartbeatHolder = new ConcurrentHashMap<>();
+	private final Map<HeartbeatTask, HeartbeatTaskMonitor> heartbeatHolder = new ConcurrentHashMap<>();
 
 	/**
 	 * 接受外部提交的所有请求任务，等待处理
 	 */
-	private LinkedBlockingQueue<InternalHeartbeatTask> taskQueue = new LinkedBlockingQueue<>();
+	private final LinkedBlockingQueue<InternalHeartbeatTask> taskQueue = new LinkedBlockingQueue<>();
 
 	/**
 	 * 心跳监测任务执行器的调度器
@@ -46,34 +45,33 @@ public class Heartbeatd implements HeartbeatdService
 		NULL
 	}
 
-	class InternalHeartbeatTask
-	{
+	static class InternalHeartbeatTask {
+
 		private TaskType taskType;
+
 		private HeartbeatTask task;
-		public InternalHeartbeatTask(TaskType taskType, HeartbeatTask task)
-		{
+
+		public InternalHeartbeatTask(TaskType taskType, HeartbeatTask task) {
 			this.taskType = taskType;
 			this.task = task;
 		}
 
-		public TaskType getTaskType()
-		{
+		public TaskType getTaskType() {
 			return taskType;
 		}
 
-		public HeartbeatTask getTask()
-		{
+		public HeartbeatTask getTask() {
 			return task;
 		}
 	}
 
 	/**
 	 * Heartbeatd实例化后启动，将自己的run方法包装成Quartz Job交给Quartz框架执行
-	 * @throws SchedulerException
+	 *
+	 * @throws SchedulerException 调度异常
 	 */
 	@PostConstruct
-	public void start() throws SchedulerException
-	{
+	public void start() throws SchedulerException {
 		JobDetail jobDetail = JobBuilder.newJob(HeartbeatdRunner.class).withIdentity("heartbeat main job").build();
 		jobDetail.getJobDataMap().put("heartbeatd instance", this);
 		SimpleTrigger trigger = TriggerBuilder.newTrigger().withIdentity("heartbeat main trigger").startNow()
@@ -84,26 +82,21 @@ public class Heartbeatd implements HeartbeatdService
 		scheduler.scheduleJob(jobDetail, trigger);
 	}
 
-	public void run()
-	{
-		while (true)
-		{
+	/**
+	 * 心跳检测框架主循环
+	 */
+	public void run() {
+		while (true) {
 			InternalHeartbeatTask task;
-			try
-			{
+			try {
 				task = taskQueue.take();
-			}
-			catch (InterruptedException e)
-			{
-//				task = new InternalHeartbeatTask(TaskType.NULL, null);
+			} catch (InterruptedException e) {
 				e.printStackTrace();
 				continue;
 			}
 
-			switch (task.taskType)
-			{
-				case REGISTER:
-				{
+			switch (task.taskType) {
+				case REGISTER: {
 					HeartbeatTaskMonitor taskMonitor = createMonitor(task.getTask());
 					heartbeatHolder.put(task.task, taskMonitor);
 
@@ -112,32 +105,25 @@ public class Heartbeatd implements HeartbeatdService
 					jobDetail.getJobDataMap().put("heartbeat task monitor instance", taskMonitor);
 					jobDetail.getJobDataMap().put("heartbeatd service", this);
 					SimpleTrigger trigger = TriggerBuilder.newTrigger().withIdentity("heartbeat task monitor trigger " + task.getTask().getId())
-							.startAt(new Date(new Date().getTime() + (task.task.getPeriod() + 1) * 1000))
+							.startAt(new Date(new Date().getTime() + (task.task.getPeriod() + 1) * 1000L))
 							.withSchedule(SimpleScheduleBuilder.simpleSchedule().withIntervalInSeconds(task.task.getPeriod() + 1)
 									.repeatForever()).build();
-					try
-					{
+					try {
 						scheduler.scheduleJob(jobDetail, trigger);
-					}
-					catch (SchedulerException e)
-					{
+					} catch (SchedulerException e) {
 						e.printStackTrace();
 					}
 					break;
 				}
-				case UNREGISTER:
-				{
+				case UNREGISTER: {
 					HeartbeatTaskMonitor taskMonitor = heartbeatHolder.get(task.getTask());
 					taskMonitor.getCancel().compareAndSet(false, true);
 					TriggerKey triggerKey = TriggerKey.triggerKey("heartbeat task monitor trigger " + task.getTask().getId());
-					try
-					{
+					try {
 						scheduler.pauseTrigger(triggerKey);
 						scheduler.unscheduleJob(triggerKey);
 						scheduler.deleteJob(JobKey.jobKey("heartbeat task monitor " + task.getTask().getId()));
-					}
-					catch (SchedulerException exception)
-					{
+					} catch (SchedulerException exception) {
 						exception.printStackTrace();
 					}
 					heartbeatHolder.remove(task.task, taskMonitor);
@@ -153,12 +139,11 @@ public class Heartbeatd implements HeartbeatdService
 	 * 注册心跳监测任务
 	 *
 	 * @param task 心跳监测任务
+	 * @throws InterruptedException 中断异常
 	 */
 	@Override
-	public void registerHeartbeatTask(HeartbeatTask task) throws InterruptedException
-	{
-		if (task != null)
-		{
+	public void registerHeartbeatTask(HeartbeatTask task) throws InterruptedException {
+		if (task != null) {
 			task.setId(UUID.randomUUID().toString());
 			taskQueue.put(new InternalHeartbeatTask(TaskType.REGISTER, task));
 		}
@@ -168,10 +153,10 @@ public class Heartbeatd implements HeartbeatdService
 	 * 注销心跳监测任务
 	 *
 	 * @param task 心跳监测任务
+	 * @throws InterruptedException 中断异常
 	 */
 	@Override
-	public void unregisterHeartbeatTask(HeartbeatTask task) throws InterruptedException
-	{
+	public void unregisterHeartbeatTask(HeartbeatTask task) throws InterruptedException {
 		if (heartbeatHolder.containsKey(task))
 			taskQueue.put(new InternalHeartbeatTask(TaskType.UNREGISTER, task));
 	}
@@ -182,40 +167,35 @@ public class Heartbeatd implements HeartbeatdService
 	 * @param task 心跳监测任务
 	 */
 	@Override
-	public void haveHeartbeatOnce(HeartbeatTask task)
-	{
+	public void haveHeartbeatOnce(HeartbeatTask task) {
 		resetHeartbeatTask(task);
 		HeartbeatTaskMonitor monitor = heartbeatHolder.get(task);
-		if (monitor.getLosted().get())
-		{
-			if (monitor.incrementRemainsAndGet() == monitor.getThreshold().get())
-			{
+		if (monitor.getLosted().get()) {
+			if (monitor.incrementRemainsAndGet() == monitor.getThreshold().get()) {
 				monitor.getLosted().compareAndSet(true, false);
 				task.getHeartbeatRecoverHandler().doWhenRecover(task);
 			}
 		}
-		else
+		else {
 			monitor.incrementRemainsAndGet();
+		}
 	}
 
 	/**
 	 * 每收到一次心跳正常的监测，需要将已有的心跳丢失监测任务重置
+	 *
 	 * @param task 心跳监测任务
 	 */
-	private void resetHeartbeatTask(HeartbeatTask task)
-	{
+	private void resetHeartbeatTask(HeartbeatTask task) {
 		HeartbeatTaskMonitor taskMonitor = heartbeatHolder.get(task);
 
 		taskMonitor.getCancel().compareAndSet(false, true);
 		TriggerKey triggerKey = TriggerKey.triggerKey("heartbeat task monitor trigger " + task.getId());
-		try
-		{
+		try {
 			scheduler.pauseTrigger(triggerKey);
 			scheduler.unscheduleJob(triggerKey);
 			scheduler.deleteJob(JobKey.jobKey("heartbeat task monitor " + task.getId()));
-		}
-		catch (SchedulerException exception)
-		{
+		} catch (SchedulerException exception) {
 			exception.printStackTrace();
 		}
 
@@ -225,15 +205,12 @@ public class Heartbeatd implements HeartbeatdService
 		jobDetail.getJobDataMap().put("heartbeat task monitor instance", taskMonitor);
 		jobDetail.getJobDataMap().put("heartbeatd service", this);
 		SimpleTrigger trigger = TriggerBuilder.newTrigger().withIdentity("heartbeat task monitor trigger " + task.getId())
-				.startAt(new Date(new Date().getTime() + (task.getPeriod() + 1) * 1000))
+				.startAt(new Date(new Date().getTime() + (task.getPeriod() + 1) * 1000L))
 				.withSchedule(SimpleScheduleBuilder.simpleSchedule().withIntervalInSeconds(task.getPeriod() + 1)
 						.repeatForever()).build();
-		try
-		{
+		try {
 			scheduler.scheduleJob(jobDetail, trigger);
-		}
-		catch (SchedulerException e)
-		{
+		} catch (SchedulerException e) {
 			e.printStackTrace();
 		}
 	}
@@ -244,29 +221,26 @@ public class Heartbeatd implements HeartbeatdService
 	 * @param task 心跳监测任务
 	 */
 	@Override
-	public void lostHeartbeatOnce(HeartbeatTask task)
-	{
+	public void lostHeartbeatOnce(HeartbeatTask task) {
 		HeartbeatTaskMonitor monitor = heartbeatHolder.get(task);
-		if (!monitor.getLosted().get())
-		{
-			if (monitor.decrementRemainsAndGet() == 0)
-			{
+		if (!monitor.getLosted().get()) {
+			if (monitor.decrementRemainsAndGet() == 0) {
 				monitor.getLosted().compareAndSet(false, true);
 				task.getHeartbeatLostHandler().doWhenLost(task);
 			}
-		}
-		else
+		} else {
 			monitor.decrementRemainsAndGet();
+		}
 
 	}
 
 	/**
 	 * 创建一个心跳监测任务监视器
+	 *
 	 * @param task 心跳监测任务
 	 * @return 心跳监测任务监视器
 	 */
-	private HeartbeatTaskMonitor createMonitor(HeartbeatTask task)
-	{
+	private HeartbeatTaskMonitor createMonitor(HeartbeatTask task) {
 		HeartbeatTaskMonitor monitor = new HeartbeatTaskMonitor();
 		monitor.setTask(task);
 		monitor.setThreshold(new AtomicInteger(task.getTimes()));

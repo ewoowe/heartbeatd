@@ -8,8 +8,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 @RequestMapping("/test")
-public class HeartbeatController
-{
+public class HeartbeatController {
     @Autowired
     private HeartbeatdService heartbeatd;
 
@@ -18,8 +17,7 @@ public class HeartbeatController
 
     @RequestMapping("/notificationSink")
     @ResponseBody
-    public void receiveHeartbeat()
-    {
+    public void receiveHeartbeat() {
         heartbeatd.haveHeartbeatOnce(cm.getTask());
     }
 }
